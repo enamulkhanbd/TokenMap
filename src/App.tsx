@@ -60,9 +60,9 @@ function App() {
 
 
   const stats = useMemo(() => {
-    const topLevelSets = nodes.filter(n => !n.parentId && n.type === 'sectionNode').length || 7; // Fallback to 7 as in screenshot if none
-    const tokensCount = nodes.filter(n => n.type === 'tokenNode').length || 317;
-    const connectionsCount = edges.length || 88;
+    const topLevelSets = nodes.filter(n => !n.parentId && n.type === 'sectionNode').length || 0;
+    const tokensCount = nodes.filter(n => n.type === 'tokenNode').length || 0;
+    const connectionsCount = edges.length || 0;
 
     return {
       sets: topLevelSets,
