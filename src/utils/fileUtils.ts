@@ -1,36 +1,41 @@
 import JSZip from 'jszip';
+import type { TokenGroup } from '../types/tokens';
 
 /**
  * Merges two or more objects deeply.
  */
-function deepMerge(target: any, source: any) {
-    const result = { ...target };
+function deepMerge<T extends object>(target: T, source: T): T {
+    const result: T = { ...target };
     for (const key in source) {
+        const sourceKey = key as keyof T;
+        const targetValue = result[sourceKey];
+        const sourceValue = source[sourceKey];
+
         if (
-            source[key] &&
-            typeof source[key] === 'object' &&
-            !Array.isArray(source[key]) &&
-            target[key] &&
-            typeof target[key] === 'object' &&
-            !Array.isArray(target[key])
+            sourceValue &&
+            typeof sourceValue === 'object' &&
+            !Array.isArray(sourceValue) &&
+            targetValue &&
+            typeof targetValue === 'object' &&
+            !Array.isArray(targetValue)
         ) {
-            result[key] = deepMerge(target[key], source[key]);
+            result[sourceKey] = deepMerge(targetValue as T, sourceValue as T) as T[keyof T];
         } else {
-            result[key] = source[key];
+            result[sourceKey] = sourceValue;
         }
     }
     return result;
 }
 
-export async function processTokenFile(file: File): Promise<any> {
+export async function processTokenFile(file: File): Promise<TokenGroup> {
     if (file.name.toLowerCase().endsWith('.json')) {
         const text = await file.text();
-        return JSON.parse(text);
+        return JSON.parse(text) as TokenGroup;
     }
 
     if (file.name.toLowerCase().endsWith('.zip')) {
         const zip = await JSZip.loadAsync(file);
-        let mergedTokens: any = {};
+        let mergedTokens: TokenGroup = {};
         let foundJson = false;
 
         const files = Object.keys(zip.files).filter(name => {
@@ -46,7 +51,7 @@ export async function processTokenFile(file: File): Promise<any> {
         for (const fileName of files) {
             const content = await zip.files[fileName].async('string');
             try {
-                const json = JSON.parse(content);
+                const json = JSON.parse(content) as TokenGroup;
                 mergedTokens = deepMerge(mergedTokens, json);
                 foundJson = true;
                 console.log(`✅ Parsed: ${fileName}`);

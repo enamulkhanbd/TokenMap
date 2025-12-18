@@ -4,11 +4,14 @@ import ReactFlow, {
     MiniMap,
     Handle,
     Position,
-    type NodeProps
+    type NodeProps,
+    type Node,
+    type Edge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import type { TokenNodeData } from '../types/tokens';
 
-const TokenNode = ({ data }: NodeProps) => {
+const TokenNode = ({ data }: NodeProps<TokenNodeData>) => {
     return (
         <div className={`token-node token-node-${data.category}`}>
             <Handle type="target" position={Position.Top} style={{ background: '#555' }} />
@@ -24,8 +27,8 @@ const nodeTypes = {
 };
 
 interface MapCanvasProps {
-    nodes: any[];
-    edges: any[];
+    nodes: Node<TokenNodeData>[];
+    edges: Edge[];
 }
 
 export const MapCanvas: React.FC<MapCanvasProps> = ({ nodes, edges }) => {

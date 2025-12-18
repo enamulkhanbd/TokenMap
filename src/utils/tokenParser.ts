@@ -1,11 +1,14 @@
-import type { TokenGroup } from '../types/tokens';
+import type { TokenGroup, ParsedTokens, TokenNodeData } from '../types/tokens';
+import type { Node, Edge } from 'reactflow';
 
-export const parseTokens = (tokens: TokenGroup): { nodes: any[]; edges: any[] } => {
-    const nodes: any[] = [];
-    const edges: any[] = [];
+export const parseTokens = (tokens: TokenGroup): ParsedTokens => {
+    const nodes: Node<TokenNodeData>[] = [];
+    const edges: Edge[] = [];
     const tokenMap = new Map<string, string>(); // path -> id
 
-    const traverse = (obj: any, path: string[] = [], category: 'primitive' | 'decision' | 'component' = 'primitive') => {
+    type Category = 'primitive' | 'decision' | 'component';
+
+    const traverse = (obj: TokenGroup, path: string[] = [], category: Category = 'primitive') => {
         for (const key in obj) {
             if (key.startsWith('$')) continue; // Skip metadata keys like $schema
 
@@ -15,15 +18,15 @@ export const parseTokens = (tokens: TokenGroup): { nodes: any[]; edges: any[] } 
 
             // Case 1: Standard Token Object (with $value or value)
             if (typeof value === 'object' && value !== null && ('$value' in value || 'value' in value)) {
-                const tokenValue = (value.$value ?? value.value) as any;
-                const tokenType = value.$type ?? value.type ?? (typeof tokenValue === 'string' && tokenValue.startsWith('#') ? 'color' : 'other');
+                const tokenValue = (value as { $value?: unknown; value?: unknown }).$value ?? (value as { value?: unknown }).value;
+                const tokenType = (value as { $type?: string; type?: string }).$type ?? (value as { type?: string }).type ?? (typeof tokenValue === 'string' && tokenValue.startsWith('#') ? 'color' : 'other');
 
                 nodes.push({
                     id,
                     data: {
                         label: key,
-                        value: typeof tokenValue === 'object' ? JSON.stringify(tokenValue) : tokenValue,
-                        type: tokenType,
+                        value: typeof tokenValue === 'object' ? JSON.stringify(tokenValue) : String(tokenValue),
+                        type: tokenType as TokenNodeData['type'],
                         category,
                         fullPath: id,
                     },
@@ -51,7 +54,7 @@ export const parseTokens = (tokens: TokenGroup): { nodes: any[]; edges: any[] } 
                     data: {
                         label: key,
                         value: String(value),
-                        type: typeof value === 'string' && value.startsWith('#') ? 'color' : typeof value,
+                        type: typeof value === 'string' && value.startsWith('#') ? 'color' : (typeof value as TokenNodeData['type']),
                         category,
                         fullPath: id,
                     },
@@ -67,7 +70,7 @@ export const parseTokens = (tokens: TokenGroup): { nodes: any[]; edges: any[] } 
                 if (lowerKey.includes('brand') || lowerKey.includes('decision') || lowerKey.includes('global')) nextCategory = 'decision';
                 if (lowerKey.includes('component') || lowerKey.includes('theme') || lowerKey.includes('semantic')) nextCategory = 'component';
 
-                traverse(value, currentPath, nextCategory);
+                traverse(value as TokenGroup, currentPath, nextCategory);
             }
         }
     };

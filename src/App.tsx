@@ -5,11 +5,12 @@ import { parseTokens } from './utils/tokenParser';
 import { getLayoutedElements } from './utils/layout';
 import { processTokenFile } from './utils/fileUtils';
 import { type Node, type Edge } from 'reactflow';
+import type { TokenGroup } from './types/tokens';
 
 function App() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [, setRawTokens] = useState<any>(null);
+  const [, setRawTokens] = useState<TokenGroup | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

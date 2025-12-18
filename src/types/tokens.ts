@@ -18,7 +18,9 @@ export interface TokenNodeData {
     fullPath: string;
 }
 
+import type { Node, Edge } from 'reactflow';
+
 export interface ParsedTokens {
-    nodes: any[];
-    edges: any[];
+    nodes: Node<TokenNodeData>[];
+    edges: Edge[];
 }
