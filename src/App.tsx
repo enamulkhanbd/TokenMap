@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { MapCanvas } from './components/MapCanvas';
 import { parseTokens } from './utils/tokenParser';
 import { getLayoutedElements } from './utils/layout';
+import { processTokenFile } from './utils/fileUtils';
 import { type Node, type Edge } from 'reactflow';
 
 function App() {
@@ -11,24 +12,20 @@ function App() {
   const [, setRawTokens] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target?.result as string);
-        setRawTokens(json);
-        const { nodes: parsedNodes, edges: parsedEdges } = parseTokens(json);
-        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(parsedNodes, parsedEdges);
-        setNodes(layoutedNodes);
-        setEdges(layoutedEdges);
-      } catch (err) {
-        alert('Invalid JSON file');
-      }
-    };
-    reader.readAsText(file);
+    try {
+      const json = await processTokenFile(file);
+      setRawTokens(json);
+      const { nodes: parsedNodes, edges: parsedEdges } = parseTokens(json);
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(parsedNodes, parsedEdges);
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
+    } catch (err) {
+      alert('Failed to process file: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
   };
 
   const handleSearch = useCallback((term: string) => {

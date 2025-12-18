@@ -26,8 +26,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileUpload, onSearch }) => {
                     fontWeight: 600
                 }}>
                     <Upload size={18} />
-                    Drop Token File
-                    <input type="file" hidden onChange={onFileUpload} accept=".json" />
+                    Drop Token File (.json, .zip)
+                    <input type="file" hidden onChange={onFileUpload} accept=".json,.zip" />
                 </label>
             </div>
 
