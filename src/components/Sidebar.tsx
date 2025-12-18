@@ -3,9 +3,11 @@ import { Upload, Search } from 'lucide-react';
 interface SidebarProps {
     onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onSearch: (term: string) => void;
+    direction: 'LR' | 'TB';
+    onDirectionToggle: (dir: 'LR' | 'TB') => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onFileUpload, onSearch }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onFileUpload, onSearch, direction, onDirectionToggle }) => {
     return (
         <div className="sidebar glass">
             <div className="logo">
@@ -49,6 +51,44 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileUpload, onSearch }) => {
                             boxSizing: 'border-box'
                         }}
                     />
+                </div>
+            </div>
+
+            <div className="layout-section">
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Layout Direction</p>
+                <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '8px' }}>
+                    <button
+                        onClick={() => onDirectionToggle('LR')}
+                        style={{
+                            flex: 1,
+                            padding: '8px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            background: direction === 'LR' ? 'var(--accent-color)' : 'transparent',
+                            color: 'white',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        Horizontal
+                    </button>
+                    <button
+                        onClick={() => onDirectionToggle('TB')}
+                        style={{
+                            flex: 1,
+                            padding: '8px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            background: direction === 'TB' ? 'var(--accent-color)' : 'transparent',
+                            color: 'white',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        Vertical
+                    </button>
                 </div>
             </div>
 

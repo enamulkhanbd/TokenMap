@@ -11,11 +11,15 @@ export interface TokenGroup {
 }
 
 export interface TokenNodeData {
-    label: string;
+    label:string;
     value: string | number;
     type?: TokenType;
     category: 'primitive' | 'decision' | 'component';
     fullPath: string;
+    isExpanded?: boolean;
+    tokens?: TokenNodeData[];
+    onToggleExpansion?: () => void;
+    tokenCount?: number;
 }
 
 import type { Node, Edge } from 'reactflow';
