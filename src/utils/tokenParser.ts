@@ -7,48 +7,67 @@ export const parseTokens = (tokens: TokenGroup): { nodes: any[]; edges: any[] } 
 
     const traverse = (obj: any, path: string[] = [], category: 'primitive' | 'decision' | 'component' = 'primitive') => {
         for (const key in obj) {
+            if (key.startsWith('$')) continue; // Skip metadata keys like $schema
+
             const currentPath = [...path, key];
             const value = obj[key];
+            const id = currentPath.join('.');
 
-            if (typeof value === 'object' && value !== null) {
-                if ('$value' in value) {
-                    // It's a token
-                    const id = currentPath.join('.');
-                    const tokenValue = value.$value as string;
+            // Case 1: Standard Token Object (with $value or value)
+            if (typeof value === 'object' && value !== null && ('$value' in value || 'value' in value)) {
+                const tokenValue = (value.$value ?? value.value) as any;
+                const tokenType = value.$type ?? value.type ?? (typeof tokenValue === 'string' && tokenValue.startsWith('#') ? 'color' : 'other');
 
-                    nodes.push({
-                        id,
-                        data: {
-                            label: key,
-                            value: tokenValue,
-                            type: value.$type,
-                            category,
-                            fullPath: id,
-                        },
-                        position: { x: 0, y: 0 }, // Will be set by layout engine
-                        type: 'tokenNode',
+                nodes.push({
+                    id,
+                    data: {
+                        label: key,
+                        value: typeof tokenValue === 'object' ? JSON.stringify(tokenValue) : tokenValue,
+                        type: tokenType,
+                        category,
+                        fullPath: id,
+                    },
+                    position: { x: 0, y: 0 },
+                    type: 'tokenNode',
+                });
+
+                tokenMap.set(id, id);
+
+                // Handle Aliases
+                if (typeof tokenValue === 'string' && tokenValue.startsWith('{') && tokenValue.endsWith('}')) {
+                    const aliasPath = tokenValue.slice(1, -1);
+                    edges.push({
+                        id: `e-${aliasPath}-${id}`,
+                        source: aliasPath,
+                        target: id,
+                        animated: true,
                     });
-
-                    tokenMap.set(id, id);
-
-                    // Handle Aliases
-                    if (typeof tokenValue === 'string' && tokenValue.startsWith('{') && tokenValue.endsWith('}')) {
-                        const aliasPath = tokenValue.slice(1, -1);
-                        edges.push({
-                            id: `e-${aliasPath}-${id}`,
-                            source: aliasPath,
-                            target: id,
-                            animated: true,
-                        });
-                    }
-                } else {
-                    // It's a group, determine category if possible or pass it down
-                    let nextCategory = category;
-                    if (key.toLowerCase().includes('brand') || key.toLowerCase().includes('decision')) nextCategory = 'decision';
-                    if (key.toLowerCase().includes('component') || key.toLowerCase().includes('theme')) nextCategory = 'component';
-
-                    traverse(value, currentPath, nextCategory);
                 }
+            }
+            // Case 2: Raw value (string/number) - Treated as a token
+            else if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                nodes.push({
+                    id,
+                    data: {
+                        label: key,
+                        value: String(value),
+                        type: typeof value === 'string' && value.startsWith('#') ? 'color' : typeof value,
+                        category,
+                        fullPath: id,
+                    },
+                    position: { x: 0, y: 0 },
+                    type: 'tokenNode',
+                });
+                tokenMap.set(id, id);
+            }
+            // Case 3: Group Object
+            else if (typeof value === 'object' && value !== null) {
+                let nextCategory = category;
+                const lowerKey = key.toLowerCase();
+                if (lowerKey.includes('brand') || lowerKey.includes('decision') || lowerKey.includes('global')) nextCategory = 'decision';
+                if (lowerKey.includes('component') || lowerKey.includes('theme') || lowerKey.includes('semantic')) nextCategory = 'component';
+
+                traverse(value, currentPath, nextCategory);
             }
         }
     };

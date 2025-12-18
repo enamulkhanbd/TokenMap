@@ -23,25 +23,40 @@ function deepMerge(target: any, source: any) {
 }
 
 export async function processTokenFile(file: File): Promise<any> {
-    if (file.name.endsWith('.json')) {
+    if (file.name.toLowerCase().endsWith('.json')) {
         const text = await file.text();
         return JSON.parse(text);
     }
 
-    if (file.name.endsWith('.zip')) {
+    if (file.name.toLowerCase().endsWith('.zip')) {
         const zip = await JSZip.loadAsync(file);
         let mergedTokens: any = {};
+        let foundJson = false;
 
-        const files = Object.keys(zip.files).filter(name => name.endsWith('.json'));
+        const files = Object.keys(zip.files).filter(name => {
+            const isJson = name.toLowerCase().endsWith('.json');
+            const isSystemFile = name.includes('__MACOSX') || name.startsWith('.') || name.includes('/.');
+            return isJson && !isSystemFile;
+        });
+
+        console.group('📦 ZIP Content Summary');
+        console.log(`Found ${files.length} JSON files:`, files);
+        console.groupEnd();
 
         for (const fileName of files) {
             const content = await zip.files[fileName].async('string');
             try {
                 const json = JSON.parse(content);
                 mergedTokens = deepMerge(mergedTokens, json);
+                foundJson = true;
+                console.log(`✅ Parsed: ${fileName}`);
             } catch (e) {
-                console.error(`Failed to parse ${fileName} in ZIP`, e);
+                console.error(`❌ Failed to parse ${fileName}:`, e);
             }
+        }
+
+        if (!foundJson) {
+            throw new Error('No valid .json token files found in ZIP archive');
         }
 
         return mergedTokens;
